@@ -28,6 +28,14 @@ func (s *System) checkTrip() {
 func (s *System) checkRecovery() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	// Hysteresis: once the vibration has settled below the recovery
+	// threshold the trip latch clears automatically so the pitch system
+	// can re-engage. This mirrors the brake latch's recovery path and
+	// keeps the high/recover thresholds from fighting each other.
+	if s.latch && s.loadMM < s.limits.VibrationRecoverMM {
+		s.latch = false
+		_ = s.st.Put(store.KeyTowerLatch, latchRecord{Engaged: false})
+	}
 }
 
 func (s *System) ClearIfRecovered() error {
