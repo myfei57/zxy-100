@@ -13,7 +13,7 @@ func (s *System) Turn(targetDeg float64) error {
 	if math.Abs(delta) < s.limits.YawDeadbandDeg {
 		return nil
 	}
-	if s.cable.Alarm() {
+	if s.cable.AtLimit() {
 		return ErrTwistLimit
 	}
 	if err := s.cable.Account(delta); err != nil {

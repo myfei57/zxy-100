@@ -25,7 +25,10 @@ func NewSystem(st *store.Store, limits ns.Limits) *System {
 	var record wrapsRecord
 	if err := st.Get(store.KeyCableWraps, &record); err == nil {
 		system.wraps = record.Wraps
-		system.alarm = record.Alarm
+		// 报警由缠绕计数与限位推导而来，不信任落盘的 alarm 字段：
+		// 旧版本在到达限位后才拉响、解缆一步就清零，重启后若计数仍处
+		// 限位而 alarm 字段为 false，扭缆保护会继续被绕过。
+		system.alarm = absInt(system.wraps) >= limits.TwistLimitTurns
 	}
 	return system
 }
