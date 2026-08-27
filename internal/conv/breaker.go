@@ -7,15 +7,19 @@ import (
 func (s *System) Close() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.closed = true
-	_ = s.st.Put(store.KeyBreakerState, breakerRecord{Closed: true})
-	s.audit.Append("conv", "breaker.close", "grid coupled")
+	// Pitch must be at the minimum angle and the turbine ready before the
+	// breaker may close. Coupling the grid while the blades still carry drag
+	// spikes main-shaft torque and damages the gearbox, so these preconditions
+	// gate the close — check them first, mutate state only on success.
 	if !s.pitch.MinReached() {
 		return ErrPitchNotMin
 	}
 	if !s.pitch.Ready() {
 		return ErrNotReady
 	}
+	s.closed = true
+	_ = s.st.Put(store.KeyBreakerState, breakerRecord{Closed: true})
+	s.audit.Append("conv", "breaker.close", "grid coupled")
 	return nil
 }
 
