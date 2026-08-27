@@ -1,0 +1,6 @@
+.git
+data
+*.tmp
+.verification-cache
+evidence
+runner
