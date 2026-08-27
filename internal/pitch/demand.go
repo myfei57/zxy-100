@@ -10,6 +10,10 @@ func (s *System) Demand(deg float64) error {
 	if err := s.brake.Charge(); err != nil {
 		return err
 	}
+	// 启动联锁：充压与制动压力落盘是两件事，未落盘完成前禁止变桨。
+	if !s.brake.Durable() {
+		return ErrNoDurablePressure
+	}
 	s.mu.Lock()
 	deg = clampDeg(deg, s.limits.MinPitchDeg, s.limits.MaxPitchDeg)
 	s.angleDeg = deg
